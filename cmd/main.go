@@ -1,8 +1,9 @@
 package main
 
 import (
+	"log"
+
 	"github.com/balajiss36/go-webrtc/internal/server"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
