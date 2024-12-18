@@ -6,8 +6,8 @@ import (
 	"time"
 
 	w "github.com/balajiss36/go-webrtc/pkg/webrtc"
-	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 )
 
 func Stream(c *fiber.Ctx) error {
@@ -35,24 +35,24 @@ func Stream(c *fiber.Ctx) error {
 	return c.Render("stream", fiber.Map{"NoStream": "true", "Leave": true}, "layouts/main")
 }
 
-func StreamWebsocket(c *websocket.Conn) error {
+func StreamWebsocket(c *websocket.Conn) {
 	suuid := c.Params("suuid")
 	if suuid == "" {
-		return nil
+		return
 	}
 	w.RoomsLock.Lock()
 	if stream, ok := w.Streams[suuid]; ok {
 		w.RoomsLock.Unlock()
-		w.StreamConn(c, stream.Peers)
+		w.StreamConn(c, &stream.Peers)
 		return
 	}
 	w.RoomsLock.Unlock()
 }
 
-func StreamViewerWebSocket(c *websocket.Conn) error {
+func StreamViewerWebsocket(c *websocket.Conn) {
 	suuid := c.Params("suuid")
 	if suuid == "" {
-		return nil
+		return
 	}
 	w.RoomsLock.Lock()
 	if stream, ok := w.Streams[suuid]; ok {
@@ -61,9 +61,10 @@ func StreamViewerWebSocket(c *websocket.Conn) error {
 		return
 	}
 	w.RoomsLock.Unlock()
+	return
 }
 
-func viewerConn(c *websocket.Conn, p *w.Peers) error {
+func viewerConn(c *websocket.Conn, p *w.Peers) {
 	ticker := time.NewTicker(time.Second * 3)
 	defer ticker.Stop()
 	defer c.Close()
@@ -72,7 +73,7 @@ func viewerConn(c *websocket.Conn, p *w.Peers) error {
 		case <-ticker.C:
 			w, err := c.NextWriter(websocket.TextMessage)
 			if err != nil {
-				return err
+				return
 			}
 			w.Write([]byte(fmt.Sprintf("%d", len(p.Connections))))
 		}

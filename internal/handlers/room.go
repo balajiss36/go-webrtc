@@ -9,8 +9,8 @@ import (
 
 	"github.com/balajiss36/go-webrtc/pkg/chat"
 	w "github.com/balajiss36/go-webrtc/pkg/webrtc"
-	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 	"github.com/google/uuid"
 	"github.com/pion/webrtc/v3"
 )
@@ -55,7 +55,7 @@ func RoomWebsocket(c *websocket.Conn) {
 
 	_, _, room := createOrGetRoom(uuid)
 
-	w.RoomConn(c, room.Peers)
+	w.RoomConn(c.Conn, room.Peers)
 }
 
 func createOrGetRoom(uuid string) (string, string, *w.Room) {
@@ -66,7 +66,6 @@ func createOrGetRoom(uuid string) (string, string, *w.Room) {
 	h.Write([]byte(uuid))
 	// secure uuid
 	suuid := fmt.Sprintf("%x", h.Sum(nil))
-
 	if room := w.Rooms[uuid]; room != nil {
 		if _, ok := w.Streams[suuid]; !ok {
 			w.Streams[suuid] = room
@@ -93,12 +92,12 @@ func RoomViewerWebsocket(c *websocket.Conn) {
 		return
 	}
 	w.RoomsLock.Lock()
+	defer w.RoomsLock.Unlock()
 	if peer, ok := w.Rooms[uuid]; ok {
 		w.RoomsLock.Unlock()
 		roomViewerConn(c, peer.Peers)
 		return
 	}
-	w.RoomLock.Unlock()
 }
 
 func roomViewerConn(c *websocket.Conn, p *w.Peers) {

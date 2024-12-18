@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/balajiss36/go-webrtc/pkg/chat"
-	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 
 	w "github.com/balajiss36/go-webrtc/pkg/webrtc"
 )
@@ -12,12 +12,11 @@ func RoomChat(c *fiber.Ctx) error {
 	return c.Render("chat", fiber.Map{}, "layouts/main")
 }
 
-func RoomChatWebsocker(c *websocket.Conn) {
+func RoomChatWebsocket(c *websocket.Conn) {
 	uuid := c.Params("uuid")
 	if uuid == "" {
 		return
 	}
-
 	w.RoomsLock.Lock()
 
 	room := w.Rooms[uuid]
@@ -25,7 +24,7 @@ func RoomChatWebsocker(c *websocket.Conn) {
 		return
 	}
 
-	chat.PeerChatConn(c, room.Hub)
+	chat.PeerChatConn(c.Conn, room.Hub)
 }
 
 func StreamChatWebsocket(c *websocket.Conn) {
@@ -41,7 +40,7 @@ func StreamChatWebsocket(c *websocket.Conn) {
 			stream.Hub = hub
 			go hub.Run()
 		}
-		chat.PeerChatConn(c, stream.Hub)
+		chat.PeerChatConn(c.Conn, stream.Hub)
 		return
 	}
 }
