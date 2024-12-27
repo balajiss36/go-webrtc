@@ -9,6 +9,12 @@ import (
 	"github.com/pion/webrtc/v3"
 )
 
+var iceServers = []webrtc.ICEServer{
+	{
+		URLs: []string{"stun:stun.l.google.com:19302"},
+	},
+}
+
 type Room struct {
 	Peers *Peers
 	Hub   *chat.Hub
@@ -28,8 +34,6 @@ type Peers struct {
 type PeerConnectionState struct {
 	PeerConnection *webrtc.PeerConnection
 	websocket      *ThreadSafeWriter
-	Conn           *websocket.Conn
-	Mutex          sync.Mutex
 }
 
 type ThreadSafeWriter struct {
