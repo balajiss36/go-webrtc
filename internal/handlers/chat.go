@@ -24,7 +24,7 @@ func RoomChatWebsocket(c *websocket.Conn) {
 		return
 	}
 
-	chat.PeerChatConn(c.Conn, room.Hub)
+	chat.PeerChatConn(c, room.Hub)
 }
 
 func StreamChatWebsocket(c *websocket.Conn) {
@@ -40,7 +40,7 @@ func StreamChatWebsocket(c *websocket.Conn) {
 			stream.Hub = hub
 			go hub.Run()
 		}
-		chat.PeerChatConn(c.Conn, stream.Hub)
+		chat.PeerChatConn(c, stream.Hub)
 		return
 	}
 }

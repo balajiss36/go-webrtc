@@ -43,7 +43,7 @@ func StreamWebsocket(c *websocket.Conn) {
 	w.RoomsLock.Lock()
 	if stream, ok := w.Streams[suuid]; ok {
 		w.RoomsLock.Unlock()
-		w.StreamConn(c, &stream.Peers)
+		w.StreamConn(c, stream.Peers)
 		return
 	}
 	w.RoomsLock.Unlock()

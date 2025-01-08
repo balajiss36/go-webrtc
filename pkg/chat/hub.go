@@ -1,5 +1,7 @@
 package chat
 
+import "fmt"
+
 type Hub struct {
 	Clients    map[*Client]bool
 	broadcast  chan []byte
@@ -18,6 +20,7 @@ func NewHub() *Hub {
 }
 
 func (h *Hub) Run() {
+	fmt.Println("Run for client")
 	for {
 		select {
 		case client := <-h.register:

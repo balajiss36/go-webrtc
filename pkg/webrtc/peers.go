@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/balajiss36/go-webrtc/pkg/chat"
-	"github.com/fasthttp/websocket"
+	"github.com/gofiber/websocket/v2"
 	"github.com/pion/webrtc/v3"
 )
 

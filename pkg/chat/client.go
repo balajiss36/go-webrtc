@@ -3,9 +3,11 @@ package chat
 import (
 	"bytes"
 	"log"
+	"net/http"
 	"time"
 
-	"github.com/fasthttp/websocket"
+	"github.com/gofiber/websocket/v2"
+	websocket2 "github.com/gorilla/websocket"
 )
 
 const (
@@ -18,9 +20,12 @@ const (
 var (
 	newline  = []byte{'\n'}
 	space    = []byte{' '}
-	upgrader = websocket.FastHTTPUpgrader{
+	upgrader = websocket2.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
 	}
 )
 
