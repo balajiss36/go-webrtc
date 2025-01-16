@@ -57,8 +57,6 @@ func StreamConn(c *websocket.Conn, p *Peers) {
 	}
 	<-gatherComplete
 
-	fmt.Println(encode(peerConnection.LocalDescription()))
-
 	p.SignalPeerConnections()
 	message := &websocketMessage{}
 	for {

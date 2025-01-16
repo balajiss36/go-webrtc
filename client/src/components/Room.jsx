@@ -4,12 +4,9 @@ import { useParams } from 'react-router-dom';
 const Room = () => {
   const { roomID } = useParams();
   const ws = useRef(null);
-
   const userVideo = useRef();
   const partnerVideo = useRef();
   const userStream = useRef();
-  const peerRef = useRef();
-  const websocketRef = useRef();
   const openCamera = async () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -39,123 +36,48 @@ const Room = () => {
 
   useEffect(() => {
     openCamera().then((stream) => {
-        userVideo.current.srcObject = stream;
-        userStream.current = stream;
-        ws.current = new WebSocket(`ws://localhost:8080/room/${roomID}`);
-        ws.current.addEventListener('open', () => {
-          console.log('Connected to the server');
-          ws.current.send(JSON.stringify({ join: "true" }));
-        });
-    
-        ws.current.addEventListener('message', async (event) => {
-            const data = JSON.parse(event.data);
-            console.log('Received data:', data);
+      userVideo.current.srcObject = stream;
+      userStream.current = stream;
+    // Establish WebSocket connection
+    ws.current = new WebSocket(`ws://localhost:8080/room/${roomID}/join`);
 
-            if (message.join){
-                    callUser();
-            }
-            // when we find a ICE candidate
-            if (message.iceCandidate){
-                console.log('Received ICE candidate:', message.iceCandidate);
-                try {
-                    peerRef.current.addIceCandidate(message.iceCandidate);
-                } catch (error) {
-                    console.log('Error receiving ICE candidate:', error);
-                }
-            }
+    ws.current.addEventListener('open', () => {
+      console.log('Connected to the server');
+      ws.current.send(JSON.stringify({ join: "true" }));
+    });
 
-            // to accept the offer
-            if (message.offer){
-                handleOffer(message.offer);
-            }
+    ws.current.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
+      console.log('Received data:', data);
 
-            if (message.answer){
-                console.log('Received answer:', message.answer);
-                peerRef.current.setRemoteDescription(new RTCSessionDescription(message.answer));
-            }
-        });
-    
-        return () => {
-          if (ws.current) {
-            ws.current.close();
-          }
-        };
-      }, [roomID]);
-    })
+      // Handle different types of messages from the server
+      if (data.join) {
+        console.log('User joined the room');
+      }
 
-    const handleOffer = async (offer) => {
-        console.log('Received offer, Creating Answer', offer);
-        peerRef.current = createPeer();
+      if (data.iceCandidate) {
+        console.log('Received ICE candidate');
+      }
 
-        // gets the offer and sets it as the remote description
-        const desc = new RTCSessionDescription(offer);
-        await peerRef.current.setRemoteDescription(desc);
+      // Add more message handling as needed
+    });
 
-        userStream.current.getTracks().forEach((track) => {
-            peerRef.current.addTrack(track, userStream.current)
-            });
+    ws.current.addEventListener('close', () => {
+      console.log('Disconnected from the server');
+    });
 
-            // peer will set answer as local description and send it to the remote peer
-        const answer = await peerRef.current.createAnswer();
-        await peerRef.current.setLocalDescription(answer);
+    ws.current.addEventListener('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+
+    // Cleanup on component unmount
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
     };
-
-    const callUser = () => {
-        console.log('Calling user');
-        peerRef.current = createPeer();
-        // add all the media tracks (audio and video) from the user's media stream to the peer connection. This allows the media to be sent to the remote peer.
-        userStream.current.getTracks().forEach((track) => {
-            peerRef.current.addTrack(track, userStream.current)
-            });
-    };
-
-    const createPeer = async ()=> {
-        const peer = new RTCPeerConnection({
-            iceServers: [
-                {
-                    urls: 'stun:stun.l.goolge.com:19302',
-                },
-            ],
-        });
-
-        peer.onnegotiationneeded = () => handleNegotiationNeededEvent(peer);
-        peer.onicecandidate = handleICECandidateEvent;
-        peer.ontrack = handleTrackEvent;
-        return peer
-    };
-
-    const handleNegotiationNeededEvent = async (peer) => {
-        console.log('Creating offer');
-        try {
-            const offer = await peer.createOffer();
-            await peer.setLocalDescription(offer);
-            console.log('Sending offer:', offer);
-            ws.current.send(
-                JSON.stringify({
-                    offer: offer,
-                })
-            );
-        }
-        catch (error) {
-            console.error('Error creating offer:', error);
-        }
-    };
-    // whenever the connection finds a ICE candidate, it sends it to the remote peer using the WebSocket connection via signallint server.
-    const handleICECandidateEvent = (event) => {
-        if (event.candidate) {
-            console.log('Sending ICE candidate:', event.candidate);
-            ws.current.send(
-                JSON.stringify({
-                    ice: event.candidate,
-                })
-            );
-        }
-    };
-
-    const handleTrackEvent = (event) => {
-        console.log('Received a track:', event);
-        partnerVideo.current.srcObject = event.streams[0];
-    };
+  }, [roomID]);
+});
 
   return (
     <div>

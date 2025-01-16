@@ -21,6 +21,12 @@ func RoomConn(c *websocket.Conn, p *Peers) {
 	config := webrtc.Configuration{
 		ICEServers: iceServers,
 	}
+
+	m := &webrtc.MediaEngine{}
+	if err := m.RegisterDefaultCodecs(); err != nil {
+		panic(err)
+	}
+
 	offer := webrtc.SessionDescription{}
 	// create new Peer connection
 	peerConnection, err := webrtc.NewPeerConnection(config)
@@ -28,7 +34,11 @@ func RoomConn(c *websocket.Conn, p *Peers) {
 		log.Fatalf("Error in creating peer connection: %v", err)
 		return
 	}
-	peerConnection.SetRemoteDescription(offer)
+	err = peerConnection.SetRemoteDescription(offer)
+	if err != nil {
+		log.Fatalf("Error in setting remote Description peer connection: %v", err)
+		return
+	}
 
 	newPeer := PeerConnectionState{
 		PeerConnection: peerConnection,
@@ -60,8 +70,6 @@ func RoomConn(c *websocket.Conn, p *Peers) {
 		panic(err)
 	}
 	<-gatherComplete
-
-	fmt.Println(encode(peerConnection.LocalDescription()))
 
 	p.SignalPeerConnections()
 	message := &websocketMessage{}
